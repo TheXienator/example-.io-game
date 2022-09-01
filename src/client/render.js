@@ -6,7 +6,7 @@ import { getCurrentState } from './state';
 
 const Constants = require('../shared/constants');
 
-const { PLAYER_RADIUS, PLAYER_MAX_HP, BULLET_RADIUS, MAP_SIZE } = Constants;
+const { PLAYER_RADIUS, PLAYER_MAX_HP, BULLET_RADIUS, MAP_SIZE, MAP_DIM } = Constants;
 
 // Get the canvas graphics context
 const canvas = document.getElementById('game-canvas');
@@ -25,8 +25,9 @@ window.addEventListener('resize', debounce(40, setCanvasDimensions));
 
 let animationFrameRequestId;
 
+const LINE_SPACING = MAP_SIZE / MAP_DIM;
 function render() {
-  const { me, others, bullets } = getCurrentState();
+  const { me, others } = getCurrentState();
   if (me) {
     // Draw background
     renderBackground(me.x, me.y);
@@ -34,16 +35,16 @@ function render() {
     // Draw boundaries
     context.strokeStyle = 'black';
     context.lineWidth = 1;
-    context.strokeRect(canvas.width / 2 - me.x, canvas.height / 2 - me.y, MAP_SIZE, MAP_SIZE);
-
-    // Draw all bullets
-    bullets.forEach(renderBullet.bind(null, me));
-
+    for (let i = 0; i <= MAP_DIM; i++) {
+      context.strokeRect(canvas.width / 4, canvas.height / 4 + i * LINE_SPACING, MAP_SIZE, 0);
+      context.strokeRect(canvas.width / 4 + i * LINE_SPACING, canvas.height / 4, 0, MAP_SIZE);
+    }
+    
     // Draw all players
     renderPlayer(me, me);
     others.forEach(renderPlayer.bind(null, me));
   }
-
+  
   // Rerun this render function on the next frame
   animationFrameRequestId = requestAnimationFrame(render);
 }
@@ -59,8 +60,7 @@ function renderBackground(x, y) {
     backgroundY,
     MAP_SIZE / 2,
   );
-  backgroundGradient.addColorStop(0, 'black');
-  backgroundGradient.addColorStop(1, 'gray');
+  backgroundGradient.addColorStop(0, 'white');
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -83,22 +83,6 @@ function renderPlayer(me, player) {
     PLAYER_RADIUS * 2,
   );
   context.restore();
-
-  // Draw health bar
-  context.fillStyle = 'white';
-  context.fillRect(
-    canvasX - PLAYER_RADIUS,
-    canvasY + PLAYER_RADIUS + 8,
-    PLAYER_RADIUS * 2,
-    2,
-  );
-  context.fillStyle = 'red';
-  context.fillRect(
-    canvasX - PLAYER_RADIUS + PLAYER_RADIUS * 2 * player.hp / PLAYER_MAX_HP,
-    canvasY + PLAYER_RADIUS + 8,
-    PLAYER_RADIUS * 2 * (1 - player.hp / PLAYER_MAX_HP),
-    2,
-  );
 }
 
 function renderBullet(me, bullet) {
